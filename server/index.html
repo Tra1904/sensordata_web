@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data from Raspberry</title>
+  <script src="https://cdn.socket.io/4.3.1/socket.io.min.js"></script>
+  <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+  <style>
+    .container {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    #dataContainer {
+      width: 50%;
+      margin-right: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #e7e4e4;
+      cursor: pointer;
+    }
+
+    th {
+      background-color: #dee2e2;
+    }
+
+    .blue-text {
+      color: rgb(35, 85, 126);
+    }
+
+    #chartContainer,
+    #chartContainer2 {
+      height: 300px;
+      width: 100%;
+    }
+
+    .map-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    iframe {
+      border: none;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1px;
+      background-color: #7bb0b0;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <h2 class="blue-text">Dữ liệu đo hôm nay:</h2>
+
+  <div class="container">
+    <!-- Table to display data -->
+    <div id="dataContainer">
+      <table>
+        <thead>
+          <tr>
+            <th>Thông số:</th>
+            <th>Giá trị:</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Nhiệt độ không khí (°C)</td>
+            <td id="temperature">-</td>
+          </tr>
+          <tr>
+            <td>Độ ẩm (%)</td>
+            <td id="humidity">-</td>
+          </tr>
+          <tr>
+            <td>Nhiệt độ nước (°C)</td>
+            <td id="temp_ds18b20">-</td>
+          </tr>
+          <tr>
+            <td>Độ dẫn điện EC (ms/cm)</td>
+            <td id="ec">-</td>
+          </tr>
+          <tr>
+            <td>Độ mặn (ppm)</td>
+            <td id="salinity_ppm">-</td>
+          </tr>
+          <tr>
+            <td>Độ mặn (g/L)</td>
+            <td id="salinity_gl">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Div for first chart container -->
+    <div id="chartContainer">
+      <!-- <h2>Sensor Data</h2> -->
+    </div>
+  </div>
+
+  <h2 class="blue-text">Định vị:</h2>
+  <div class="map-container">
+    <iframe width="1200" height="300" scrolling="no" marginheight="0" marginwidth="0" title="Map"
+      src="//www.arcgis.com/apps/Embed/index.html?webmap=414ffa446fbf46dca0193ce20594601c&extent=106.325,10.3439,106.4059,10.383&zoom=true&previewImage=false&scale=false&search=true&searchextent=true&disable_scroll=false&theme=light"></iframe>
+  </div>
+
+  <!-- Div for second chart container -->
+  <div id="chartContainer2">
+    <!-- <h2>Giá trị:</h2> -->
+  </div>
+
+  <script>
+    window.onload = function () {
+      // Connect to WebSocket server
+      const socket = io('ws://192.168.1.103:8000');
+
+      // Initialize first chart
+      var chart = new CanvasJS.Chart("chartContainer", {
+        animationEnabled: true,
+        title: {
+          text: "Sensor Data"
+        },
+        axisX: {
+          title: "Thời gian"
+        },
+        axisY: {
+          title: "Giá trị"
+        },
+        legend: {
+          verticalAlign: "bottom",
+          horizontalAlign: "center",
+          fontSize: 13
+        },
+        toolTip: {
+          shared: true
+        },
+        data: [{
+          name: "Nhiệt độ không khí (°C)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(255,0,0,0.6)", // Màu đỏ
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ ẩm không khí (%)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(0,0,255,0.6)", // Màu xanh dương
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Nhiệt độ nước (°C)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(0,128,0,0.6)", // Màu xanh lá
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ dẫn điện EC (ms/cm)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(255, 209, 26, 0.7)", // Màu vàng
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ mặn (ppm)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(255,165,0,0.6)", // Màu cam
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ mặn (g/L)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(128,0,128,0.6)", // Màu tím
+          markerSize: 0,
+          dataPoints: []
+        }
+        ]
+      });
+
+      // Initialize second chart
+      var chart2 = new CanvasJS.Chart("chartContainer2", {
+        animationEnabled: true,
+        //title: {
+        //text: "Giá trị: "
+        //},
+        axisX: {
+          title: "Thời gian"
+        },
+        axisY: {
+          title: "Giá trị"
+        },
+        legend: {
+          verticalAlign: "bottom",
+          horizontalAlign: "center",
+          fontSize: 13
+        },
+        toolTip: {
+          shared: true
+        },
+        data: [{
+          name: "Nhiệt độ không khí (°C)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(255,0,0,0.6)", // Màu đỏ
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ ẩm không khí (%)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(0,0,255,0.6)", // Màu xanh dương
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Nhiệt độ nước (°C)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(0,128,0,0.6)", // Màu xanh lá
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ dẫn điện EC (ms/cm)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(255, 209, 26, 0.7)", // Màu vàng
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ mặn (ppm)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(255,165,0,0.6)", // Màu cam
+          markerSize: 0,
+          dataPoints: []
+        },
+        {
+          name: "Độ mặn (g/L)",
+          showInLegend: true,
+          legendMarkerType: "square",
+          type: "splineArea",
+          color: "rgba(128,0,128,0.6)", // Màu tím
+          markerSize: 0,
+          dataPoints: []
+        }
+        ]
+      });
+
+      chart.render();
+      chart2.render();
+      // Event listener for sensor data from server
+      socket.on('sensorData', (data) => {
+        // Update table with sensor data
+        document.getElementById('temperature').textContent = data.temperature.toFixed(2);
+        document.getElementById('humidity').textContent = data.humidity.toFixed(2);
+        document.getElementById('temp_ds18b20').textContent = data.tempDs18b20.toFixed(2);
+        document.getElementById('ec').textContent = data.ec.toFixed(2);
+        document.getElementById('salinity_ppm').textContent = data.salinity_ppm.toFixed(2);
+        document.getElementById('salinity_gl').textContent = data.salinity_gl.toFixed(2);
+        // Update first chart with sensor data
+        chart.options.data[0].dataPoints.push({
+          x: new Date(),
+          y: data.temperature
+        });
+        chart.options.data[1].dataPoints.push({
+          x: new Date(),
+          y: data.humidity
+        });
+        chart.options.data[2].dataPoints.push({
+          x: new Date(),
+          y: data.tempDs18b20
+        });
+        chart.options.data[3].dataPoints.push({
+          x: new Date(),
+          y: data.ec
+        });
+        chart.options.data[4].dataPoints.push({
+          x: new Date(),
+          y: data.salinity_ppm
+        });
+        chart.options.data[5].dataPoints.push({
+          x: new Date(),
+          y: data.salinity_gl
+        });
+
+        // Update second chart with sensor data
+        chart2.options.data[0].dataPoints.push({
+          x: new Date(),
+          y: data.temperature
+        });
+        chart2.options.data[1].dataPoints.push({
+          x: new Date(),
+          y: data.humidity
+        });
+        chart2.options.data[2].dataPoints.push({
+          x: new Date(),
+          y: data.tempDs18b20
+        });
+        chart2.options.data[3].dataPoints.push({
+          x: new Date(),
+          y: data.ec
+        });
+        chart2.options.data[4].dataPoints.push({
+          x: new Date(),
+          y: data.salinity_ppm
+        });
+        chart2.options.data[5].dataPoints.push({
+          x: new Date(),
+          y: data.salinity_gl
+        });
+
+        chart.render();
+        chart2.render();
+
+        // Add click event listeners to table cells
+        document.getElementById('temperature').addEventListener('click', function () {
+          toggleChartData(chart, 0);
+          //toggleChartData(chart2, 0);
+        });
+        document.getElementById('humidity').addEventListener('click', function () {
+          toggleChartData(chart, 1);
+          //toggleChartData(chart2, 1);
+        });
+        document.getElementById('temp_ds18b20').addEventListener('click', function () {
+          toggleChartData(chart, 2);
+          //toggleChartData(chart2, 2);
+        });
+        document.getElementById('ec').addEventListener('click', function () {
+          toggleChartData(chart, 3);
+          //toggleChartData(chart2, 3);
+        });
+        document.getElementById('salinity_ppm').addEventListener('click', function () {
+          toggleChartData(chart, 4);
+          //toggleChartData(chart2, 4);
+        });
+        document.getElementById('salinity_gl').addEventListener('click', function () {
+          toggleChartData(chart, 5);
+          //toggleChartData(chart2, 5);
+        });
+
+        // Function to toggle visibility of chart data series
+        function toggleChartData(chart, index) {
+          chart.options.data.forEach(function (series, i) {
+            if (i === index) {
+              series.visible = true;
+            } else {
+              series.visible = false;
+            }
+          });
+          chart.render();
+        }
+      });
+
+    }
+  </script>
+
+  <footer>
+    <p>Hệ thống quan trắc - 2024</p>
+  </footer>
+
+</body>
+
+</html>

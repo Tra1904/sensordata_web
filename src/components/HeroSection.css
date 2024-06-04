@@ -1,0 +1,45 @@
+/* Herosection.css */
+.hero-container {
+  height: 100vh;
+  /* Chiều cao của hero section là 100% chiều cao của viewport */
+  width: 100%;
+  /* Chiều rộng là 100% */
+  display: flex;
+  /* Sử dụng flexbox */
+  flex-direction: column;
+  /* Sắp xếp các phần tử theo chiều dọc */
+  align-items: center;
+  /* Căn giữa các phần tử theo chiều ngang */
+  box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.2);
+  /* Tạo hiệu ứng shadow cho hero section */
+  font-weight: bold;
+  /* Độ đậm của font */
+  font-family: 'Arial', sans-serif;
+  /* Font chữ */
+}
+
+.hero-container h1 {
+  font-weight: bold;
+  /* Độ đậm của font */
+  font-size: 2rem;
+  /* Kích thước font */
+  color: rgb(19, 5, 77);
+  /* Màu chữ */
+  font-family: 'Arial', sans-serif;
+  /* Font chữ */
+  margin-top: 10px;
+  /* Khoảng cách từ trên xuống */
+}
+
+.hero-container h2 {
+  color: rgb(33, 27, 77);
+  /* Màu chữ */
+  font-weight: bold;
+  /* Độ đậm của font */
+  font-size: 1.2rem;
+  /* Kích thước font */
+  font-family: 'Arial', sans-serif;
+  /* Font chữ */
+  margin-top: 5px;
+  /* Khoảng cách từ trên xuống */
+}
